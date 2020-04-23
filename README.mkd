@@ -26,9 +26,10 @@ First, create some [shim](https://en.wikipedia.org/wiki/Shim_(computing)) functi
 ```C
     /* required, this must send a single CAN message with the given arbitration
      * ID (i.e. the CAN message ID) and data. The size will never be more than 8
-     * bytes. */
-    int  isotp_user_send_can(const uint32_t arbitration_id,
-                             const uint8_t* data, const uint8_t size) {
+     * bytes.
+     * Should return ISOTP_RET_OK if succesful, otherwise ISOTP_RET_ERROR. */
+    int isotp_user_send_can(const uint32_t arbitration_id,
+                            const uint8_t* data, const uint8_t size) {
         // ...
     }
 
@@ -51,17 +52,17 @@ You can use isotp-c in the following way:
     /* Alloc IsoTpLink statically in RAM */
     static IsoTpLink g_link;
 
-	/* Alloc send and receive buffer statically in RAM */
+    /* Alloc send and receive buffer statically in RAM */
     static uint8_t g_isotpRecvBuf[ISOTP_BUFSIZE];
     static uint8_t g_isotpSendBuf[ISOTP_BUFSIZE];
-	
+    
     int main(void) {
         /* Initialize CAN and other peripherals */
         
         /* Initialize link, 0x7TT is the CAN ID you send with */
         isotp_init_link(&g_link, 0x7TT,
-						g_isotpSendBuf, sizeof(g_isotpSendBuf), 
-						g_isotpRecvBuf, sizeof(g_isotpRecvBuf));
+                        g_isotpSendBuf, sizeof(g_isotpSendBuf),
+                        g_isotpRecvBuf, sizeof(g_isotpRecvBuf));
         
         while(1) {
         
@@ -99,14 +100,14 @@ You can use isotp-c in the following way:
             if (ISOTP_RET_OK == ret) {
                 /* Send ok */
             } else {
-                /* Error occur */
+                /* Error occured */
             }
         }
 
         return;
     }
 ```
-    
+
 You can call isotp_poll as frequently as you want, as it internally uses isotp_user_get_ms to measure timeout occurences.
 If you need handle functional addressing, you must use two separate links, one for each.
 
@@ -115,23 +116,23 @@ If you need handle functional addressing, you must use two separate links, one f
     static IsoTpLink g_phylink;
     static IsoTpLink g_funclink;
 
-	/* Allocate send and receive buffer statically in RAM */
-	static uint8_t g_isotpPhyRecvBuf[512];
-	static uint8_t g_isotpPhySendBuf[512];
-	/* currently functional addressing is not supported with multi-frame messages */
-	static uint8_t g_isotpFuncRecvBuf[8];
-	static uint8_t g_isotpFuncSendBuf[8];	
-	
+    /* Allocate send and receive buffer statically in RAM */
+    static uint8_t g_isotpPhyRecvBuf[512];
+    static uint8_t g_isotpPhySendBuf[512];
+    /* currently functional addressing is not supported with multi-frame messages */
+    static uint8_t g_isotpFuncRecvBuf[8];
+    static uint8_t g_isotpFuncSendBuf[8];
+    
     int main(void) {
         /* Initialize CAN and other peripherals */
         
         /* Initialize link, 0x7TT is the CAN ID you send with */
         isotp_init_link(&g_phylink, 0x7TT,
-						g_isotpPhySendBuf, sizeof(g_isotpPhySendBuf), 
-						g_isotpPhyRecvBuf, sizeof(g_isotpPhyRecvBuf));
+                        g_isotpPhySendBuf, sizeof(g_isotpPhySendBuf),
+                        g_isotpPhyRecvBuf, sizeof(g_isotpPhyRecvBuf));
         isotp_init_link(&g_funclink, 0x7TT,
-						g_isotpFuncSendBuf, sizeof(g_isotpFuncSendBuf), 
-						g_isotpFuncRecvBuf, sizeof(g_isotpFuncRecvBuf));
+                        g_isotpFuncSendBuf, sizeof(g_isotpFuncSendBuf),
+                        g_isotpFuncRecvBuf, sizeof(g_isotpFuncRecvBuf));
         
         while(1) {
         
@@ -145,7 +146,7 @@ If you need handle functional addressing, you must use two separate links, one f
                 } else if (0x7df == id) {
                     isotp_on_can_message(&g_funclink, data, len);
                 }
-            } 
+            }
             
             /* Poll link to handle multiple frame transmition */
             isotp_poll(&g_phylink);
@@ -164,7 +165,7 @@ If you need handle functional addressing, you must use two separate links, one f
             ret = isotp_receive(&g_funclink, payload, payload_size, &out_size);
             if (ISOTP_RET_OK == ret) {
                 /* Handle functional addressing message */
-            }            
+            }
             
             /* And send message with isotp_send */
             ret = isotp_send(&g_phylink, payload, payload_size);
@@ -175,7 +176,7 @@ If you need handle functional addressing, you must use two separate links, one f
             }
         }
 
-        return;
+        return 0;
     }
 ```
 
